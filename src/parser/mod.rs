@@ -1,4 +1,5 @@
-use std::{collections::HashMap, path::Path, rc::Rc};
+use std::{collections::HashMap, path::Path};
+pub mod toml;
 
 use clap::ValueEnum;
 
@@ -7,7 +8,7 @@ use clap::ValueEnum;
 pub enum SupportedFormats {
     yaml,
     toml,
-    json
+    json,
 }
 
 pub trait Parser {
@@ -17,7 +18,7 @@ pub trait Parser {
 #[derive(Debug, Clone, PartialEq)]
 pub struct NixVariable {
     pub name: String,
-    pub value: NixVariableValue
+    pub value: NixVariableValue,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,15 +33,21 @@ pub enum NixVariableValue {
 }
 
 pub struct ExpressionParser {
-    parsers: HashMap<SupportedFormats, Box<dyn Parser>>
+    parsers: HashMap<SupportedFormats, Box<dyn 'static + Parser>>,
 }
 
 impl ExpressionParser {
     pub fn new() -> ExpressionParser {
-        ExpressionParser{ parsers: HashMap::new() }
+        ExpressionParser {
+            parsers: HashMap::new(),
+        }
     }
 
-    pub fn add_parser(mut self, format: SupportedFormats, parser: Box<dyn Parser>) -> Option<ExpressionParser> {
+    pub fn add_parser(
+        mut self,
+        format: SupportedFormats,
+        parser: Box<dyn Parser>,
+    ) -> Option<ExpressionParser> {
         if self.parsers.contains_key(&format) {
             None
         } else {
@@ -57,4 +64,3 @@ impl ExpressionParser {
         }
     }
 }
-

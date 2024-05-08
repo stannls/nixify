@@ -1,9 +1,10 @@
+use std::rc::Rc;
 use std::{fs, path::PathBuf};
 
 use clap::{arg, command, value_parser, ArgMatches};
 mod parser;
+use parser::toml::TomlParser;
 use parser::{ExpressionParser, SupportedFormats};
-
 
 fn main() {
     // Disable verbose panic for release mode and send error to stderr
@@ -29,34 +30,41 @@ fn main() {
                 .help("The file to convert.")
                 .value_parser(value_parser!(std::path::PathBuf)),
         )
-        .arg(arg!(--"format" <FORMAT>) 
+        .arg(
+            arg!(--"format" <FORMAT>)
                 .short('f')
                 .long("format")
                 .required(true)
                 .id("format")
                 .help("The format of the file to convert.")
-                .value_parser(value_parser!(SupportedFormats))
+                .value_parser(value_parser!(SupportedFormats)),
         )
-        .arg(arg!(--"name" <NAME>)
+        .arg(
+            arg!(--"name" <NAME>)
                 .short('n')
                 .long("name")
                 .required(true)
                 .id("name")
                 .help("The name of the program in the nix expression."),
-        ).get_matches();
+        )
+        .get_matches();
     handle_matches(matches);
 }
 
 fn handle_matches(matches: ArgMatches) {
     // Build a new ExpressionParser
-    let expression_parser = ExpressionParser::new();
+    let expression_parser = ExpressionParser::new()
+        .add_parser(SupportedFormats::toml, Box::new(TomlParser::new()))
+        .unwrap();
 
     // Get arguments from clap
     let filepath: &PathBuf = matches.get_one("file").unwrap();
     let format: SupportedFormats = *matches.get_one("format").unwrap();
-    
+
     // Parse the file
     let content = fs::read_to_string(filepath).expect("Error reading given file");
-    let parsed = expression_parser.parse(&content, format).expect("Failed parsing the given file");
+    let parsed = expression_parser
+        .parse(&content, format)
+        .expect("Failed parsing the given file");
     unimplemented!()
 }
