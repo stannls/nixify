@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::Path};
 pub mod toml;
+pub mod yaml;
 
 use clap::ValueEnum;
 
@@ -22,6 +23,7 @@ pub struct NixVariable {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum NixVariableValue {
     String(String),
     Number(f64),

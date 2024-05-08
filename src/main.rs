@@ -1,10 +1,11 @@
-use std::rc::Rc;
 use std::{fs, path::PathBuf};
 
 use clap::{arg, command, value_parser, ArgMatches};
 mod parser;
 use parser::toml::TomlParser;
 use parser::{ExpressionParser, SupportedFormats};
+
+use crate::parser::yaml::YamlParser;
 
 fn main() {
     // Disable verbose panic for release mode and send error to stderr
@@ -55,6 +56,8 @@ fn handle_matches(matches: ArgMatches) {
     // Build a new ExpressionParser
     let expression_parser = ExpressionParser::new()
         .add_parser(SupportedFormats::toml, Box::new(TomlParser::new()))
+        .unwrap()
+        .add_parser(SupportedFormats::yaml, Box::new(YamlParser::new()))
         .unwrap();
 
     // Get arguments from clap
@@ -66,5 +69,6 @@ fn handle_matches(matches: ArgMatches) {
     let parsed = expression_parser
         .parse(&content, format)
         .expect("Failed parsing the given file");
+    dbg!(parsed);
     unimplemented!()
 }
