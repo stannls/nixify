@@ -6,6 +6,7 @@ use parser::toml::TomlParser;
 use parser::{ExpressionParser, SupportedFormats};
 
 use crate::parser::yaml::YamlParser;
+use crate::parser::ExpressionGenerator;
 
 fn main() {
     // Disable verbose panic for release mode and send error to stderr
@@ -59,16 +60,18 @@ fn handle_matches(matches: ArgMatches) {
         .unwrap()
         .add_parser(SupportedFormats::yaml, Box::new(YamlParser::new()))
         .unwrap();
+    let expression_generator = ExpressionGenerator::new();
 
     // Get arguments from clap
     let filepath: &PathBuf = matches.get_one("file").unwrap();
     let format: SupportedFormats = *matches.get_one("format").unwrap();
+    let name: &String = matches.get_one("name").unwrap();
 
     // Parse the file
     let content = fs::read_to_string(filepath).expect("Error reading given file");
     let parsed = expression_parser
         .parse(&content, format)
         .expect("Failed parsing the given file");
-    dbg!(parsed);
-    unimplemented!()
+    dbg!(&parsed);
+    println!("{}", expression_generator.generate_nix_expression(name, &parsed).unwrap());
 }

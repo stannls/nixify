@@ -22,6 +22,12 @@ pub struct NixVariable {
     pub value: NixVariableValue,
 }
 
+impl NixVariable {
+    pub fn to_string(&self) -> String {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum NixVariableValue {
@@ -64,5 +70,20 @@ impl ExpressionParser {
         } else {
             self.parsers[&format].parse(content)
         }
+    }
+}
+
+pub struct ExpressionGenerator {}
+
+impl ExpressionGenerator {
+    pub fn new() -> ExpressionGenerator {
+        ExpressionGenerator {  }
+    }
+    pub fn generate_nix_expression(&self, name: &str, values: &Vec<NixVariable>) -> Option<String> {
+        vec!["{ config, pkgs, ... }:".to_string(), "{".to_string(), format!("programs.{}.enable = true;", name)].into_iter()
+            .chain(values.into_iter()
+                   .map(|v| v.to_string()))
+            .chain(vec!["};".to_string(), "}".to_string()])
+            .reduce(|acc, e| format!("{acc}\n{e}"))
     }
 }
