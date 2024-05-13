@@ -72,6 +72,10 @@ fn handle_matches(matches: ArgMatches) {
     let parsed = expression_parser
         .parse(&content, format)
         .expect("Failed parsing the given file");
-    dbg!(&parsed);
-    println!("{}", expression_generator.generate_nix_expression(name, &parsed).unwrap());
+    println!(
+        "{}",
+        expression_generator
+            .generate_nix_expression(name, &parsed)
+            .unwrap()
+    );
 }

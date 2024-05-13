@@ -24,7 +24,10 @@ pub struct NixVariable {
 
 impl NixVariable {
     pub fn to_string(&self) -> String {
-        todo!()
+        format!("{} = {};\n", self.name, self.value.to_string())
+    }
+    pub fn new(name: String, value: NixVariableValue) -> NixVariable {
+        NixVariable { name, value }
     }
 }
 
@@ -38,6 +41,35 @@ pub enum NixVariableValue {
     Null,
     List(Vec<NixVariableValue>),
     AttributeSet(HashMap<String, NixVariableValue>),
+}
+
+impl NixVariableValue {
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::Number(n) => format!("{}", n),
+            Self::String(s) => format!("\"{}\"", s),
+            Self::Path(p) => format!("{}", p.to_str().expect("Error parsing file.")),
+            Self::Boolean(b) => format!("{}", b),
+            Self::Null => "null".to_string(),
+            Self::AttributeSet(a) => format!(
+                "{{\n{}}}",
+                a.into_iter()
+                    .map(
+                        |(key, value)| NixVariable::new(key.to_owned(), value.to_owned())
+                            .to_string()
+                    )
+                    .reduce(|acc, e| acc + &e)
+                    .expect("Error parsing file")
+            ),
+            Self::List(l) => format!(
+                "[\n{}\n]",
+                l.into_iter()
+                    .map(|f| f.to_string())
+                    .reduce(|acc, e| acc + "\n" + &e)
+                    .unwrap()
+            ),
+        }
+    }
 }
 
 pub struct ExpressionParser {
@@ -77,13 +109,17 @@ pub struct ExpressionGenerator {}
 
 impl ExpressionGenerator {
     pub fn new() -> ExpressionGenerator {
-        ExpressionGenerator {  }
+        ExpressionGenerator {}
     }
     pub fn generate_nix_expression(&self, name: &str, values: &Vec<NixVariable>) -> Option<String> {
-        vec!["{ config, pkgs, ... }:".to_string(), "{".to_string(), format!("programs.{}.enable = true;", name)].into_iter()
-            .chain(values.into_iter()
-                   .map(|v| v.to_string()))
-            .chain(vec!["};".to_string(), "}".to_string()])
-            .reduce(|acc, e| format!("{acc}\n{e}"))
+        vec![
+            "{ config, pkgs, ... }:\n".to_string(),
+            "{\n".to_string(),
+            format!("programs.{}.enable = true;\n", name),
+        ]
+        .into_iter()
+        .chain(values.into_iter().map(|v| v.to_string()))
+        .chain(vec!["};\n".to_string(), "}".to_string()])
+        .reduce(|acc, e| format!("{acc}{e}"))
     }
 }
