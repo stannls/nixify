@@ -5,6 +5,7 @@ mod parser;
 use parser::toml::TomlParser;
 use parser::{ExpressionParser, SupportedFormats};
 
+use crate::parser::json::JsonParser;
 use crate::parser::yaml::YamlParser;
 use crate::parser::ExpressionGenerator;
 
@@ -59,6 +60,8 @@ fn handle_matches(matches: ArgMatches) {
         .add_parser(SupportedFormats::toml, Box::new(TomlParser::new()))
         .unwrap()
         .add_parser(SupportedFormats::yaml, Box::new(YamlParser::new()))
+        .unwrap()
+        .add_parser(SupportedFormats::json, Box::new(JsonParser::new()))
         .unwrap();
     let expression_generator = ExpressionGenerator::new();
 
@@ -72,7 +75,9 @@ fn handle_matches(matches: ArgMatches) {
     let parsed = expression_parser
         .parse(&content, format)
         .expect("Failed parsing the given file");
-    let expression = expression_generator.generate_nix_expression(name, &parsed).unwrap();
+    let expression = expression_generator
+        .generate_nix_expression(name, &parsed)
+        .unwrap();
     let formatted = nixpkgs_fmt::reformat_string(&expression);
     println!("{}", formatted);
 }

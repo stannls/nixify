@@ -1,4 +1,5 @@
 use std::{collections::HashMap, path::Path};
+pub mod json;
 pub mod toml;
 pub mod yaml;
 
