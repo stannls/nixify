@@ -72,10 +72,7 @@ fn handle_matches(matches: ArgMatches) {
     let parsed = expression_parser
         .parse(&content, format)
         .expect("Failed parsing the given file");
-    println!(
-        "{}",
-        expression_generator
-            .generate_nix_expression(name, &parsed)
-            .unwrap()
-    );
+    let expression = expression_generator.generate_nix_expression(name, &parsed).unwrap();
+    let formatted = nixpkgs_fmt::reformat_string(&expression);
+    println!("{}", formatted);
 }
