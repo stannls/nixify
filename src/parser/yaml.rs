@@ -54,3 +54,56 @@ impl Parser for YamlParser {
         YamlParser::parse_node(&YamlLoader::load_from_str(content).ok()?[0])
     }
 }
+
+mod tests {
+    use std::collections::HashMap;
+
+    use crate::parser::{yaml::YamlParser, NixVariable, NixVariableValue, Parser};
+
+    #[test]
+    fn test_yaml() {
+        let parser = YamlParser::new();
+        let yaml = "
+foo:
+    bar:
+        a: 1
+        b: 'test'
+this:
+    is:
+        a:
+            float: 0.1
+# Comment
+            ";
+        let expected = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(HashMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(HashMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(HashMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(HashMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(HashMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let parsed = parser.parse(&yaml);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), expected)
+    }
+}

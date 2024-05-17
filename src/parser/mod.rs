@@ -27,8 +27,11 @@ impl NixVariable {
     pub fn to_string(&self) -> String {
         format!("{} = {};\n", self.name, self.value.to_string())
     }
-    pub fn new(name: String, value: NixVariableValue) -> NixVariable {
-        NixVariable { name, value }
+    pub fn new(name: &str, value: &NixVariableValue) -> NixVariable {
+        NixVariable {
+            name: name.to_owned(),
+            value: value.to_owned(),
+        }
     }
 }
 
@@ -55,10 +58,7 @@ impl NixVariableValue {
             Self::AttributeSet(a) => format!(
                 "{{\n{}}}",
                 a.into_iter()
-                    .map(
-                        |(key, value)| NixVariable::new(key.to_owned(), value.to_owned())
-                            .to_string()
-                    )
+                    .map(|(key, value)| NixVariable::new(key, value).to_string())
                     .reduce(|acc, e| acc + &e)
                     .expect("Error parsing file")
             ),

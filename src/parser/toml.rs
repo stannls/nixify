@@ -43,3 +43,52 @@ impl Parser for TomlParser {
         )
     }
 }
+
+mod test {
+    use crate::parser::{toml::TomlParser, NixVariable, NixVariableValue, Parser};
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_toml() {
+        let parser = TomlParser::new();
+        let toml = "
+[foo.bar]
+a = 1
+b = \"test\"
+[this.is.a]
+float = 0.1
+# A comment
+            ";
+        let expected = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(HashMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(HashMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(HashMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(HashMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(HashMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let parsed = parser.parse(&toml);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), expected)
+    }
+}
