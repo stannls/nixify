@@ -1,6 +1,5 @@
-use toml::{Table, Value};
-
 use super::{NixVariable, NixVariableValue, Parser};
+use toml::{Table, Value};
 
 #[derive(Debug, Clone)]
 pub struct TomlParser {}
@@ -41,5 +40,55 @@ impl Parser for TomlParser {
                 })
                 .collect(),
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::parser::{toml::TomlParser, NixVariable, NixVariableValue, Parser};
+    use indexmap::IndexMap;
+
+    #[test]
+    fn test_toml() {
+        let parser = TomlParser::new();
+        let toml = "
+[foo.bar]
+a = 1
+b = \"test\"
+[this.is.a]
+float = 0.1
+# A comment
+            ";
+        let expected = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(IndexMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let parsed = parser.parse(&toml);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), expected)
     }
 }

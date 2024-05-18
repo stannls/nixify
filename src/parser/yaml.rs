@@ -1,5 +1,5 @@
 use super::{NixVariable, NixVariableValue, Parser};
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use yaml_rust2::{Yaml, YamlLoader};
 
 pub struct YamlParser {}
@@ -41,7 +41,7 @@ impl YamlParser {
                             YamlParser::parse_variable(value),
                         ))
                     })
-                    .collect::<Option<HashMap<String, NixVariableValue>>>()
+                    .collect::<Option<IndexMap<String, NixVariableValue>>>()
                     .unwrap(),
             ),
             _ => NixVariableValue::Null,
@@ -52,5 +52,58 @@ impl YamlParser {
 impl Parser for YamlParser {
     fn parse(&self, content: &str) -> Option<Vec<super::NixVariable>> {
         YamlParser::parse_node(&YamlLoader::load_from_str(content).ok()?[0])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::{yaml::YamlParser, NixVariable, NixVariableValue, Parser};
+    use indexmap::IndexMap;
+
+    #[test]
+    fn test_yaml() {
+        let parser = YamlParser::new();
+        let yaml = "
+foo:
+    bar:
+        a: 1
+        b: 'test'
+this:
+    is:
+        a:
+            float: 0.1
+# Comment
+            ";
+        let expected = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(IndexMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let parsed = parser.parse(&yaml);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), expected)
     }
 }
