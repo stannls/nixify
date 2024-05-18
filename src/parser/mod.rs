@@ -1,9 +1,10 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 pub mod json;
 pub mod toml;
 pub mod yaml;
 
 use clap::ValueEnum;
+use indexmap::IndexMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, ValueEnum)]
 #[allow(non_camel_case_types)]
@@ -44,7 +45,7 @@ pub enum NixVariableValue {
     Boolean(bool),
     Null,
     List(Vec<NixVariableValue>),
-    AttributeSet(HashMap<String, NixVariableValue>),
+    AttributeSet(IndexMap<String, NixVariableValue>),
 }
 
 impl NixVariableValue {
@@ -74,13 +75,13 @@ impl NixVariableValue {
 }
 
 pub struct ExpressionParser {
-    parsers: HashMap<SupportedFormats, Box<dyn 'static + Parser>>,
+    parsers: IndexMap<SupportedFormats, Box<dyn 'static + Parser>>,
 }
 
 impl ExpressionParser {
     pub fn new() -> ExpressionParser {
         ExpressionParser {
-            parsers: HashMap::new(),
+            parsers: IndexMap::new(),
         }
     }
 
@@ -113,7 +114,6 @@ impl ExpressionGenerator {
         ExpressionGenerator {}
     }
     pub fn generate_nix_expression(&self, name: &str, values: &Vec<NixVariable>) -> Option<String> {
-        dbg!(values);
         vec![
             "{ config, pkgs, ... }:\n".to_string(),
             "{\n".to_string(),
@@ -128,7 +128,8 @@ impl ExpressionGenerator {
 
 mod tests {
     use super::{ExpressionGenerator, NixVariable, NixVariableValue};
-    use std::{collections::HashMap, path::Path};
+    use std::path::Path;
+    use indexmap::IndexMap;
 
     #[test]
     fn test_expression_generator() {
@@ -136,9 +137,9 @@ mod tests {
         let expression = vec![
             NixVariable::new(
                 "foo",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "bar".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([
+                    NixVariableValue::AttributeSet(IndexMap::from([
                         ("a".to_string(), NixVariableValue::Number(1.0)),
                         (
                             "b".to_string(),
@@ -149,11 +150,11 @@ mod tests {
             ),
             NixVariable::new(
                 "this",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "is".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([(
+                    NixVariableValue::AttributeSet(IndexMap::from([(
                         "a".to_string(),
-                        NixVariableValue::AttributeSet(HashMap::from([(
+                        NixVariableValue::AttributeSet(IndexMap::from([(
                             "float".to_string(),
                             NixVariableValue::Number(0.1),
                         )])),
@@ -161,7 +162,7 @@ mod tests {
                 )])),
             ),
         ];
-        let expected = "{ config, pkgs, ... }:\n{\nprograms.test.enable = true;\nfoo = {\nbar = {\nb = \"test\";\na = 1;\n};\n};\nthis = {\nis = {\na = {\nfloat = 0.1;\n};\n};\n};\n};\n}";
+        let expected = "{ config, pkgs, ... }:\n{\nprograms.test.enable = true;\nfoo = {\nbar = {\na = 1;\nb = \"test\";\n};\n};\nthis = {\nis = {\na = {\nfloat = 0.1;\n};\n};\n};\n};\n}";
         let generated = expression_generator.generate_nix_expression("test", &expression);
         assert!(generated.is_some());
         assert_eq!(generated.unwrap(), expected);
@@ -175,7 +176,7 @@ mod tests {
         let bool = NixVariable::new("bool", &NixVariableValue::Boolean(true));
         let null = NixVariable::new("null", &NixVariableValue::Null);
         let list = NixVariable::new("list", &NixVariableValue::List(vec![NixVariableValue::Number(4.2), NixVariableValue::Number(6.9)]));
-        let attrset = NixVariable::new("attrset", &NixVariableValue::AttributeSet(HashMap::from([("foo".to_string(), NixVariableValue::String("bar".to_string()))])));
+        let attrset = NixVariable::new("attrset", &NixVariableValue::AttributeSet(IndexMap::from([("foo".to_string(), NixVariableValue::String("bar".to_string()))])));
 
         assert_eq!(number.to_string(), "number = 4.2;\n");
         assert_eq!(string.to_string(), "string = \"foobar\";\n");

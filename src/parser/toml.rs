@@ -1,5 +1,4 @@
 use toml::{Table, Value};
-
 use super::{NixVariable, NixVariableValue, Parser};
 
 #[derive(Debug, Clone)]
@@ -46,7 +45,7 @@ impl Parser for TomlParser {
 
 mod test {
     use crate::parser::{toml::TomlParser, NixVariable, NixVariableValue, Parser};
-    use std::collections::HashMap;
+    use indexmap::IndexMap;
 
     #[test]
     fn test_toml() {
@@ -62,9 +61,9 @@ float = 0.1
         let expected = vec![
             NixVariable::new(
                 "foo",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "bar".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([
+                    NixVariableValue::AttributeSet(IndexMap::from([
                         ("a".to_string(), NixVariableValue::Number(1.0)),
                         (
                             "b".to_string(),
@@ -75,11 +74,11 @@ float = 0.1
             ),
             NixVariable::new(
                 "this",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "is".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([(
+                    NixVariableValue::AttributeSet(IndexMap::from([(
                         "a".to_string(),
-                        NixVariableValue::AttributeSet(HashMap::from([(
+                        NixVariableValue::AttributeSet(IndexMap::from([(
                             "float".to_string(),
                             NixVariableValue::Number(0.1),
                         )])),

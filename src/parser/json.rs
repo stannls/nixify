@@ -1,7 +1,5 @@
 use serde_json::Value;
-
 use crate::parser::NixVariable;
-
 use super::{NixVariableValue, Parser};
 
 pub struct JsonParser {}
@@ -64,7 +62,7 @@ impl Parser for JsonParser {
 
 mod test {
     use crate::parser::{json::JsonParser, NixVariable, NixVariableValue, Parser};
-    use std::collections::HashMap;
+    use indexmap::IndexMap;
 
     #[test]
     fn test_json() {
@@ -89,9 +87,9 @@ mod test {
         let expected = vec![
             NixVariable::new(
                 "foo",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "bar".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([
+                    NixVariableValue::AttributeSet(IndexMap::from([
                         ("a".to_string(), NixVariableValue::Number(1.0)),
                         (
                             "b".to_string(),
@@ -102,11 +100,11 @@ mod test {
             ),
             NixVariable::new(
                 "this",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "is".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([(
+                    NixVariableValue::AttributeSet(IndexMap::from([(
                         "a".to_string(),
-                        NixVariableValue::AttributeSet(HashMap::from([(
+                        NixVariableValue::AttributeSet(IndexMap::from([(
                             "float".to_string(),
                             NixVariableValue::Number(0.1),
                         )])),

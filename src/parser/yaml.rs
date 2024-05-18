@@ -1,6 +1,6 @@
 use super::{NixVariable, NixVariableValue, Parser};
-use std::collections::HashMap;
 use yaml_rust2::{Yaml, YamlLoader};
+use indexmap::IndexMap;
 
 pub struct YamlParser {}
 impl YamlParser {
@@ -41,7 +41,7 @@ impl YamlParser {
                             YamlParser::parse_variable(value),
                         ))
                     })
-                    .collect::<Option<HashMap<String, NixVariableValue>>>()
+                    .collect::<Option<IndexMap<String, NixVariableValue>>>()
                     .unwrap(),
             ),
             _ => NixVariableValue::Null,
@@ -56,9 +56,8 @@ impl Parser for YamlParser {
 }
 
 mod tests {
-    use std::collections::HashMap;
-
     use crate::parser::{yaml::YamlParser, NixVariable, NixVariableValue, Parser};
+    use indexmap::IndexMap;
 
     #[test]
     fn test_yaml() {
@@ -77,9 +76,9 @@ this:
         let expected = vec![
             NixVariable::new(
                 "foo",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "bar".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([
+                    NixVariableValue::AttributeSet(IndexMap::from([
                         ("a".to_string(), NixVariableValue::Number(1.0)),
                         (
                             "b".to_string(),
@@ -90,11 +89,11 @@ this:
             ),
             NixVariable::new(
                 "this",
-                &NixVariableValue::AttributeSet(HashMap::from([(
+                &NixVariableValue::AttributeSet(IndexMap::from([(
                     "is".to_string(),
-                    NixVariableValue::AttributeSet(HashMap::from([(
+                    NixVariableValue::AttributeSet(IndexMap::from([(
                         "a".to_string(),
-                        NixVariableValue::AttributeSet(HashMap::from([(
+                        NixVariableValue::AttributeSet(IndexMap::from([(
                             "float".to_string(),
                             NixVariableValue::Number(0.1),
                         )])),
