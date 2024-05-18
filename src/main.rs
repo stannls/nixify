@@ -24,7 +24,7 @@ fn main() {
 
     let matches = command!()
         .name("nixify")
-        .version("0.1.0")
+        .version("0.1.1")
         .about("A CLI tool to turn existing configurations into nix syntax.")
         .arg(
             arg!(<FILE>)
