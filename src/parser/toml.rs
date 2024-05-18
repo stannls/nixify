@@ -43,6 +43,7 @@ impl Parser for TomlParser {
     }
 }
 
+#[cfg(test)]
 mod test {
     use crate::parser::{toml::TomlParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;

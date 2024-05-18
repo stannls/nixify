@@ -60,6 +60,7 @@ impl Parser for JsonParser {
     }
 }
 
+#[cfg(test)]
 mod test {
     use crate::parser::{json::JsonParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;

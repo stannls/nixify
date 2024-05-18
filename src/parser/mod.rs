@@ -126,6 +126,7 @@ impl ExpressionGenerator {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::{ExpressionGenerator, NixVariable, NixVariableValue};
     use std::path::Path;

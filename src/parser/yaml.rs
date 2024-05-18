@@ -55,6 +55,7 @@ impl Parser for YamlParser {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::parser::{yaml::YamlParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;
