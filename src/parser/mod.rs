@@ -129,8 +129,8 @@ impl ExpressionGenerator {
 #[cfg(test)]
 mod tests {
     use super::{ExpressionGenerator, NixVariable, NixVariableValue};
-    use std::path::Path;
     use indexmap::IndexMap;
+    use std::path::Path;
 
     #[test]
     fn test_expression_generator() {
@@ -173,11 +173,26 @@ mod tests {
     fn test_variable_conversion() {
         let number = NixVariable::new("number", &NixVariableValue::Number(4.2));
         let string = NixVariable::new("string", &NixVariableValue::String("foobar".to_string()));
-        let path = NixVariable::new("path", &NixVariableValue::Path(Box::new(Path::new("/tmp/foo").to_path_buf())));
+        let path = NixVariable::new(
+            "path",
+            &NixVariableValue::Path(Box::new(Path::new("/tmp/foo").to_path_buf())),
+        );
         let bool = NixVariable::new("bool", &NixVariableValue::Boolean(true));
         let null = NixVariable::new("null", &NixVariableValue::Null);
-        let list = NixVariable::new("list", &NixVariableValue::List(vec![NixVariableValue::Number(4.2), NixVariableValue::Number(6.9)]));
-        let attrset = NixVariable::new("attrset", &NixVariableValue::AttributeSet(IndexMap::from([("foo".to_string(), NixVariableValue::String("bar".to_string()))])));
+        let list = NixVariable::new(
+            "list",
+            &NixVariableValue::List(vec![
+                NixVariableValue::Number(4.2),
+                NixVariableValue::Number(6.9),
+            ]),
+        );
+        let attrset = NixVariable::new(
+            "attrset",
+            &NixVariableValue::AttributeSet(IndexMap::from([(
+                "foo".to_string(),
+                NixVariableValue::String("bar".to_string()),
+            )])),
+        );
 
         assert_eq!(number.to_string(), "number = 4.2;\n");
         assert_eq!(string.to_string(), "string = \"foobar\";\n");

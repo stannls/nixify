@@ -1,5 +1,5 @@
-use toml::{Table, Value};
 use super::{NixVariable, NixVariableValue, Parser};
+use toml::{Table, Value};
 
 #[derive(Debug, Clone)]
 pub struct TomlParser {}

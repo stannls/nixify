@@ -1,6 +1,6 @@
 use super::{NixVariable, NixVariableValue, Parser};
-use yaml_rust2::{Yaml, YamlLoader};
 use indexmap::IndexMap;
+use yaml_rust2::{Yaml, YamlLoader};
 
 pub struct YamlParser {}
 impl YamlParser {

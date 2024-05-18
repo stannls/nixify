@@ -1,6 +1,6 @@
-use serde_json::Value;
-use crate::parser::NixVariable;
 use super::{NixVariableValue, Parser};
+use crate::parser::NixVariable;
+use serde_json::Value;
 
 pub struct JsonParser {}
 impl JsonParser {
