@@ -107,11 +107,17 @@ impl ExpressionParser {
     }
 }
 
-pub struct ExpressionGenerator {}
+pub struct ExpressionGenerator {
+    formatting: bool,
+}
 
 impl ExpressionGenerator {
     pub fn new() -> ExpressionGenerator {
-        ExpressionGenerator {}
+        ExpressionGenerator { formatting: false }
+    }
+    pub fn with_formatting(mut self) -> ExpressionGenerator {
+        self.formatting = true;
+        self
     }
     pub fn generate_nix_expression(&self, name: &str, values: &Vec<NixVariable>) -> Option<String> {
         vec![
@@ -123,6 +129,13 @@ impl ExpressionGenerator {
         .chain(values.into_iter().map(|v| v.to_string()))
         .chain(vec!["};\n".to_string(), "}".to_string()])
         .reduce(|acc, e| format!("{acc}{e}"))
+        .map(|expression| {
+            if self.formatting {
+                nixpkgs_fmt::reformat_string(&expression)
+            } else {
+                expression
+            }
+        })
     }
 }
 
@@ -164,6 +177,43 @@ mod tests {
             ),
         ];
         let expected = "{ config, pkgs, ... }:\n{\nprograms.test.enable = true;\nfoo = {\nbar = {\na = 1;\nb = \"test\";\n};\n};\nthis = {\nis = {\na = {\nfloat = 0.1;\n};\n};\n};\n};\n}";
+        let generated = expression_generator.generate_nix_expression("test", &expression);
+        assert!(generated.is_some());
+        assert_eq!(generated.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_expression_generator_formatted() {
+        let expression_generator = ExpressionGenerator::new().with_formatting();
+        let expression = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(IndexMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let expected = "{ config, pkgs, ... }:\n{\n  programs.test.enable = true;\n  foo = {\n    bar = {\n      a = 1;\n      b = \"test\";\n    };\n  };\n  this = {\n    is = {\n      a = {\n        float = 0.1;\n      };\n    };\n  };\n};\n}\n";
         let generated = expression_generator.generate_nix_expression("test", &expression);
         assert!(generated.is_some());
         assert_eq!(generated.unwrap(), expected);

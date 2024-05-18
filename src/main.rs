@@ -63,7 +63,7 @@ fn handle_matches(matches: ArgMatches) {
         .unwrap()
         .add_parser(SupportedFormats::json, Box::new(JsonParser::new()))
         .unwrap();
-    let expression_generator = ExpressionGenerator::new();
+    let expression_generator = ExpressionGenerator::new().with_formatting();
 
     // Get arguments from clap
     let filepath: &PathBuf = matches.get_one("file").unwrap();
@@ -78,6 +78,5 @@ fn handle_matches(matches: ArgMatches) {
     let expression = expression_generator
         .generate_nix_expression(name, &parsed)
         .unwrap();
-    let formatted = nixpkgs_fmt::reformat_string(&expression);
-    println!("{}", formatted);
+    println!("{}", expression);
 }
