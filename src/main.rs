@@ -6,6 +6,8 @@ use nixify::parser::{
     SupportedFormats,
 };
 
+const VERSION: &str = "0.2.0";
+
 fn main() {
     // Disable verbose panic for release mode and send error to stderr
     #[cfg(not(debug_assertions))]
@@ -21,7 +23,7 @@ fn main() {
 
     let matches = command!()
         .name("nixify")
-        .version("0.2.0")
+        .version(VERSION)
         .about("A CLI tool to turn existing configurations into nix syntax.")
         .arg(
             arg!(<FILE>)
