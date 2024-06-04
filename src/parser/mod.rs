@@ -76,12 +76,14 @@ impl NixVariableValue {
 
 pub struct ExpressionParser {
     parsers: IndexMap<SupportedFormats, Box<dyn 'static + Parser>>,
+    guess_format: bool,
 }
 
 impl ExpressionParser {
     pub fn new() -> ExpressionParser {
         ExpressionParser {
             parsers: IndexMap::new(),
+            guess_format: false,
         }
     }
 
@@ -98,11 +100,27 @@ impl ExpressionParser {
         }
     }
 
-    pub fn parse(&self, content: &str, format: SupportedFormats) -> Option<Vec<NixVariable>> {
-        if !self.parsers.contains_key(&format) {
-            None
+    pub fn with_format_guessing(mut self) -> ExpressionParser {
+        self.guess_format = true;
+        self
+    }
+
+    pub fn parse(
+        &self,
+        content: &str,
+        format: &Option<SupportedFormats>,
+    ) -> Option<Vec<NixVariable>> {
+        if format.is_none() && self.guess_format {
+            self.parsers
+                .iter()
+                .map(|(_format, parser)| parser.parse(content))
+                .filter(|parsed| parsed.is_some())
+                .last()
+                .flatten()
+        } else if format.is_some() && self.parsers.contains_key(&format.unwrap()) {
+            self.parsers[&format.unwrap()].parse(content)
         } else {
-            self.parsers[&format].parse(content)
+            None
         }
     }
 }
@@ -141,7 +159,10 @@ impl ExpressionGenerator {
 
 #[cfg(test)]
 mod tests {
-    use super::{ExpressionGenerator, NixVariable, NixVariableValue};
+    use super::{
+        json::JsonParser, toml::TomlParser, yaml::YamlParser, ExpressionGenerator,
+        ExpressionParser, NixVariable, NixVariableValue,
+    };
     use indexmap::IndexMap;
     use std::path::Path;
 
@@ -251,5 +272,89 @@ mod tests {
         assert_eq!(null.to_string(), "null = null;\n");
         assert_eq!(list.to_string(), "list = [\n4.2\n6.9\n];\n");
         assert_eq!(attrset.to_string(), "attrset = {\nfoo = \"bar\";\n};\n");
+    }
+    #[test]
+    fn test_format_guessing() {
+        let parser = ExpressionParser::new()
+            .add_parser(super::SupportedFormats::yaml, Box::new(YamlParser::new()))
+            .unwrap()
+            .add_parser(super::SupportedFormats::toml, Box::new(TomlParser::new()))
+            .unwrap()
+            .add_parser(super::SupportedFormats::json, Box::new(JsonParser::new()))
+            .unwrap()
+            .with_format_guessing();
+        let yaml = "
+foo:
+    bar:
+        a: 1
+        b: 'test'
+this:
+    is:
+        a:
+            float: 0.1
+# Comment
+            ";
+        let toml = "
+[foo.bar]
+a = 1
+b = \"test\"
+[this.is.a]
+float = 0.1
+# A comment
+            ";
+        let json = "
+{
+    \"foo\": {
+        \"bar\": {
+            \"a\": 1,
+            \"b\": \"test\"
+        }
+    },
+    \"this\": {
+        \"is\": {
+            \"a\" : {
+                \"float\": 0.1
+            }
+        }
+    }
+}
+";
+        let expected = vec![
+            NixVariable::new(
+                "foo",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "bar".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([
+                        ("a".to_string(), NixVariableValue::Number(1.0)),
+                        (
+                            "b".to_string(),
+                            NixVariableValue::String("test".to_string()),
+                        ),
+                    ])),
+                )])),
+            ),
+            NixVariable::new(
+                "this",
+                &NixVariableValue::AttributeSet(IndexMap::from([(
+                    "is".to_string(),
+                    NixVariableValue::AttributeSet(IndexMap::from([(
+                        "a".to_string(),
+                        NixVariableValue::AttributeSet(IndexMap::from([(
+                            "float".to_string(),
+                            NixVariableValue::Number(0.1),
+                        )])),
+                    )])),
+                )])),
+            ),
+        ];
+        let yaml_result = parser.parse(&yaml, &None);
+        let toml_result = parser.parse(&toml, &None);
+        let json_result = parser.parse(&json, &None);
+        assert!(yaml_result.is_some());
+        assert_eq!(yaml_result.unwrap(), expected);
+        assert!(toml_result.is_some());
+        assert_eq!(toml_result.unwrap(), expected);
+        assert!(json_result.is_some());
+        assert_eq!(json_result.unwrap(), expected);
     }
 }
