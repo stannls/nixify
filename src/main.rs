@@ -1,13 +1,10 @@
 use std::{fs, path::PathBuf};
 
 use clap::{arg, command, value_parser, ArgMatches};
-mod parser;
-use parser::toml::TomlParser;
-use parser::{ExpressionParser, SupportedFormats};
-
-use crate::parser::json::JsonParser;
-use crate::parser::yaml::YamlParser;
-use crate::parser::ExpressionGenerator;
+use nixify::parser::{
+    json::JsonParser, toml::TomlParser, yaml::YamlParser, ExpressionGenerator, ExpressionParser,
+    SupportedFormats,
+};
 
 fn main() {
     // Disable verbose panic for release mode and send error to stderr
