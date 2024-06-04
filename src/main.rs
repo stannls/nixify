@@ -70,7 +70,7 @@ fn handle_matches(matches: ArgMatches) {
     // Parse the file
     let content = fs::read_to_string(filepath).expect("Error reading given file");
     let parsed = expression_parser
-        .parse(&content, format)
+        .parse(&content, Some(format))
         .expect("Failed parsing the given file");
     let expression = expression_generator
         .generate_nix_expression(name, &parsed)

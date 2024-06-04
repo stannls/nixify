@@ -76,12 +76,14 @@ impl NixVariableValue {
 
 pub struct ExpressionParser {
     parsers: IndexMap<SupportedFormats, Box<dyn 'static + Parser>>,
+    guess_format: bool,
 }
 
 impl ExpressionParser {
     pub fn new() -> ExpressionParser {
         ExpressionParser {
             parsers: IndexMap::new(),
+            guess_format: false,
         }
     }
 
@@ -98,11 +100,27 @@ impl ExpressionParser {
         }
     }
 
-    pub fn parse(&self, content: &str, format: SupportedFormats) -> Option<Vec<NixVariable>> {
-        if !self.parsers.contains_key(&format) {
-            None
+    pub fn with_format_guessing(mut self) -> ExpressionParser {
+        self.guess_format = true;
+        self
+    }
+
+    pub fn parse(
+        &self,
+        content: &str,
+        format: Option<SupportedFormats>,
+    ) -> Option<Vec<NixVariable>> {
+        if format.is_none() && self.guess_format {
+            self.parsers
+                .iter()
+                .map(|(_format, parser)| parser.parse(content))
+                .filter(|parsed| parsed.is_some())
+                .last()
+                .flatten()
+        } else if format.is_some() && self.parsers.contains_key(&format.unwrap()) {
+            self.parsers[&format.unwrap()].parse(content)
         } else {
-            self.parsers[&format].parse(content)
+            None
         }
     }
 }
