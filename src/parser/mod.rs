@@ -108,7 +108,7 @@ impl ExpressionParser {
     pub fn parse(
         &self,
         content: &str,
-        format: Option<SupportedFormats>,
+        format: &Option<SupportedFormats>,
     ) -> Option<Vec<NixVariable>> {
         if format.is_none() && self.guess_format {
             self.parsers
@@ -347,9 +347,9 @@ float = 0.1
                 )])),
             ),
         ];
-        let yaml_result = parser.parse(&yaml, None);
-        let toml_result = parser.parse(&toml, None);
-        let json_result = parser.parse(&json, None);
+        let yaml_result = parser.parse(&yaml, &None);
+        let toml_result = parser.parse(&toml, &None);
+        let json_result = parser.parse(&json, &None);
         assert!(yaml_result.is_some());
         assert_eq!(yaml_result.unwrap(), expected);
         assert!(toml_result.is_some());

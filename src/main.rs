@@ -34,7 +34,7 @@ fn main() {
             arg!(--"format" <FORMAT>)
                 .short('f')
                 .long("format")
-                .required(true)
+                .required(false)
                 .id("format")
                 .help("The format of the file to convert.")
                 .value_parser(value_parser!(SupportedFormats)),
@@ -59,18 +59,24 @@ fn handle_matches(matches: ArgMatches) {
         .add_parser(SupportedFormats::yaml, Box::new(YamlParser::new()))
         .unwrap()
         .add_parser(SupportedFormats::json, Box::new(JsonParser::new()))
-        .unwrap();
+        .unwrap()
+        .with_format_guessing();
     let expression_generator = ExpressionGenerator::new().with_formatting();
 
     // Get arguments from clap
     let filepath: &PathBuf = matches.get_one("file").unwrap();
-    let format: SupportedFormats = *matches.get_one("format").unwrap();
+    let format: Option<SupportedFormats> = matches
+        .get_one("format")
+        .map(|f: &SupportedFormats| f.to_owned());
     let name: &String = matches.get_one("name").unwrap();
 
     // Parse the file
     let content = fs::read_to_string(filepath).expect("Error reading given file");
+    if format.is_none() {
+        eprintln!("No format specified. Trying to guess the format..")
+    }
     let parsed = expression_parser
-        .parse(&content, Some(format))
+        .parse(&content, &format)
         .expect("Failed parsing the given file");
     let expression = expression_generator
         .generate_nix_expression(name, &parsed)
