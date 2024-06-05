@@ -47,11 +47,16 @@ impl Parser for TomlParser {
 mod test {
     use crate::parser::{toml::TomlParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;
+    use lazy_static::lazy_static;
 
     #[test]
     fn test_toml() {
         let parser = TomlParser::new();
-        let toml = "
+        let parsed = parser.parse(&TOML);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), *EXPECTED)
+    }
+    const TOML: &str = "
 [foo.bar]
 a = 1
 b = \"test\"
@@ -59,7 +64,8 @@ b = \"test\"
 float = 0.1
 # A comment
             ";
-        let expected = vec![
+    lazy_static! {
+        pub static ref EXPECTED: Vec<NixVariable> = vec![
             NixVariable::new(
                 "foo",
                 &NixVariableValue::AttributeSet(IndexMap::from([(
@@ -87,8 +93,5 @@ float = 0.1
                 )])),
             ),
         ];
-        let parsed = parser.parse(&toml);
-        assert!(parsed.is_some());
-        assert_eq!(parsed.unwrap(), expected)
     }
 }

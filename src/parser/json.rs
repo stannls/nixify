@@ -64,28 +64,18 @@ impl Parser for JsonParser {
 mod test {
     use crate::parser::{json::JsonParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;
+    use lazy_static::lazy_static;
 
     #[test]
     fn test_json() {
         let parser = JsonParser::new();
-        let json = "
-{
-    \"foo\": {
-        \"bar\": {
-            \"a\": 1,
-            \"b\": \"test\"
-        }
-    },
-    \"this\": {
-        \"is\": {
-            \"a\" : {
-                \"float\": 0.1
-            }
-        }
+
+        let parsed = parser.parse(&JSON);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), *EXPECTED)
     }
-}
-";
-        let expected = vec![
+    lazy_static! {
+        pub static ref EXPECTED: Vec<NixVariable> = vec![
             NixVariable::new(
                 "foo",
                 &NixVariableValue::AttributeSet(IndexMap::from([(
@@ -113,8 +103,22 @@ mod test {
                 )])),
             ),
         ];
-        let parsed = parser.parse(&json);
-        assert!(parsed.is_some());
-        assert_eq!(parsed.unwrap(), expected)
     }
+    const JSON: &str = "
+{
+    \"foo\": {
+        \"bar\": {
+            \"a\": 1,
+            \"b\": \"test\"
+        }
+    },
+    \"this\": {
+        \"is\": {
+            \"a\" : {
+                \"float\": 0.1
+            }
+        }
+    }
+}
+";
 }

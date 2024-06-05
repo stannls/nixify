@@ -164,41 +164,15 @@ mod tests {
         ExpressionParser, NixVariable, NixVariableValue,
     };
     use indexmap::IndexMap;
+    use lazy_static::lazy_static;
     use std::path::Path;
 
     #[test]
     fn test_expression_generator() {
         let expression_generator = ExpressionGenerator::new();
-        let expression = vec![
-            NixVariable::new(
-                "foo",
-                &NixVariableValue::AttributeSet(IndexMap::from([(
-                    "bar".to_string(),
-                    NixVariableValue::AttributeSet(IndexMap::from([
-                        ("a".to_string(), NixVariableValue::Number(1.0)),
-                        (
-                            "b".to_string(),
-                            NixVariableValue::String("test".to_string()),
-                        ),
-                    ])),
-                )])),
-            ),
-            NixVariable::new(
-                "this",
-                &NixVariableValue::AttributeSet(IndexMap::from([(
-                    "is".to_string(),
-                    NixVariableValue::AttributeSet(IndexMap::from([(
-                        "a".to_string(),
-                        NixVariableValue::AttributeSet(IndexMap::from([(
-                            "float".to_string(),
-                            NixVariableValue::Number(0.1),
-                        )])),
-                    )])),
-                )])),
-            ),
-        ];
+
         let expected = "{ config, pkgs, ... }:\n{\nprograms.test.enable = true;\nfoo = {\nbar = {\na = 1;\nb = \"test\";\n};\n};\nthis = {\nis = {\na = {\nfloat = 0.1;\n};\n};\n};\n};\n}";
-        let generated = expression_generator.generate_nix_expression("test", &expression);
+        let generated = expression_generator.generate_nix_expression("test", &EXPRESSION);
         assert!(generated.is_some());
         assert_eq!(generated.unwrap(), expected);
     }
@@ -206,36 +180,9 @@ mod tests {
     #[test]
     fn test_expression_generator_formatted() {
         let expression_generator = ExpressionGenerator::new().with_formatting();
-        let expression = vec![
-            NixVariable::new(
-                "foo",
-                &NixVariableValue::AttributeSet(IndexMap::from([(
-                    "bar".to_string(),
-                    NixVariableValue::AttributeSet(IndexMap::from([
-                        ("a".to_string(), NixVariableValue::Number(1.0)),
-                        (
-                            "b".to_string(),
-                            NixVariableValue::String("test".to_string()),
-                        ),
-                    ])),
-                )])),
-            ),
-            NixVariable::new(
-                "this",
-                &NixVariableValue::AttributeSet(IndexMap::from([(
-                    "is".to_string(),
-                    NixVariableValue::AttributeSet(IndexMap::from([(
-                        "a".to_string(),
-                        NixVariableValue::AttributeSet(IndexMap::from([(
-                            "float".to_string(),
-                            NixVariableValue::Number(0.1),
-                        )])),
-                    )])),
-                )])),
-            ),
-        ];
+
         let expected = "{ config, pkgs, ... }:\n{\n  programs.test.enable = true;\n  foo = {\n    bar = {\n      a = 1;\n      b = \"test\";\n    };\n  };\n  this = {\n    is = {\n      a = {\n        float = 0.1;\n      };\n    };\n  };\n};\n}\n";
-        let generated = expression_generator.generate_nix_expression("test", &expression);
+        let generated = expression_generator.generate_nix_expression("test", &EXPRESSION);
         assert!(generated.is_some());
         assert_eq!(generated.unwrap(), expected);
     }
@@ -319,7 +266,19 @@ float = 0.1
     }
 }
 ";
-        let expected = vec![
+
+        let yaml_result = parser.parse(&yaml, &None);
+        let toml_result = parser.parse(&toml, &None);
+        let json_result = parser.parse(&json, &None);
+        assert!(yaml_result.is_some());
+        assert_eq!(yaml_result.unwrap(), *EXPRESSION);
+        assert!(toml_result.is_some());
+        assert_eq!(toml_result.unwrap(), *EXPRESSION);
+        assert!(json_result.is_some());
+        assert_eq!(json_result.unwrap(), *EXPRESSION);
+    }
+    lazy_static! {
+        pub static ref EXPRESSION: Vec<NixVariable> = vec![
             NixVariable::new(
                 "foo",
                 &NixVariableValue::AttributeSet(IndexMap::from([(
@@ -347,14 +306,5 @@ float = 0.1
                 )])),
             ),
         ];
-        let yaml_result = parser.parse(&yaml, &None);
-        let toml_result = parser.parse(&toml, &None);
-        let json_result = parser.parse(&json, &None);
-        assert!(yaml_result.is_some());
-        assert_eq!(yaml_result.unwrap(), expected);
-        assert!(toml_result.is_some());
-        assert_eq!(toml_result.unwrap(), expected);
-        assert!(json_result.is_some());
-        assert_eq!(json_result.unwrap(), expected);
     }
 }

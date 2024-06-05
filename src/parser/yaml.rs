@@ -59,22 +59,18 @@ impl Parser for YamlParser {
 mod tests {
     use crate::parser::{yaml::YamlParser, NixVariable, NixVariableValue, Parser};
     use indexmap::IndexMap;
+    use lazy_static::lazy_static;
 
     #[test]
     fn test_yaml() {
         let parser = YamlParser::new();
-        let yaml = "
-foo:
-    bar:
-        a: 1
-        b: 'test'
-this:
-    is:
-        a:
-            float: 0.1
-# Comment
-            ";
-        let expected = vec![
+
+        let parsed = parser.parse(&YAML);
+        assert!(parsed.is_some());
+        assert_eq!(parsed.unwrap(), *EXPECTED)
+    }
+    lazy_static! {
+        pub static ref EXPECTED: Vec<NixVariable> = vec![
             NixVariable::new(
                 "foo",
                 &NixVariableValue::AttributeSet(IndexMap::from([(
@@ -102,8 +98,16 @@ this:
                 )])),
             ),
         ];
-        let parsed = parser.parse(&yaml);
-        assert!(parsed.is_some());
-        assert_eq!(parsed.unwrap(), expected)
     }
+    const YAML: &str = "
+foo:
+    bar:
+        a: 1
+        b: 'test'
+this:
+    is:
+        a:
+            float: 0.1
+# Comment
+            ";
 }
