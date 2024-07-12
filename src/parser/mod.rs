@@ -36,6 +36,7 @@ impl NixVariable {
     }
 }
 
+
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum NixVariableValue {
@@ -53,7 +54,7 @@ impl NixVariableValue {
         match self {
             Self::Number(n) => format!("{}", n),
             Self::String(s) => format!("\"{}\"", s),
-            Self::Path(p) => format!("{}", p.to_str().expect("Error parsing file.")),
+            Self::Path(p) => p.to_str().expect("Error parsing file.").to_string(),
             Self::Boolean(b) => format!("{}", b),
             Self::Null => "null".to_string(),
             Self::AttributeSet(a) => format!(
@@ -65,7 +66,7 @@ impl NixVariableValue {
             ),
             Self::List(l) => format!(
                 "[\n{}\n]",
-                l.into_iter()
+                l.iter()
                     .map(|f| f.to_string())
                     .reduce(|acc, e| acc + "\n" + &e)
                     .unwrap()
@@ -77,6 +78,12 @@ impl NixVariableValue {
 pub struct ExpressionParser {
     parsers: IndexMap<SupportedFormats, Box<dyn 'static + Parser>>,
     guess_format: bool,
+}
+
+impl Default for ExpressionParser {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ExpressionParser {
@@ -129,6 +136,12 @@ pub struct ExpressionGenerator {
     formatting: bool,
 }
 
+impl Default for ExpressionGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ExpressionGenerator {
     pub fn new() -> ExpressionGenerator {
         ExpressionGenerator { formatting: false }
@@ -137,14 +150,14 @@ impl ExpressionGenerator {
         self.formatting = true;
         self
     }
-    pub fn generate_nix_expression(&self, name: &str, values: &Vec<NixVariable>) -> Option<String> {
+    pub fn generate_nix_expression(&self, name: &str, values: &[NixVariable]) -> Option<String> {
         vec![
             "{ config, pkgs, ... }:\n".to_string(),
             "{\n".to_string(),
             format!("programs.{}.enable = true;\n", name),
         ]
         .into_iter()
-        .chain(values.into_iter().map(|v| v.to_string()))
+        .chain(values.iter().map(|v| v.to_string()))
         .chain(vec!["};\n".to_string(), "}".to_string()])
         .reduce(|acc, e| format!("{acc}{e}"))
         .map(|expression| {
@@ -267,9 +280,9 @@ float = 0.1
 }
 ";
 
-        let yaml_result = parser.parse(&yaml, &None);
-        let toml_result = parser.parse(&toml, &None);
-        let json_result = parser.parse(&json, &None);
+        let yaml_result = parser.parse(yaml, &None);
+        let toml_result = parser.parse(toml, &None);
+        let json_result = parser.parse(json, &None);
         assert!(yaml_result.is_some());
         assert_eq!(yaml_result.unwrap(), *EXPRESSION);
         assert!(toml_result.is_some());

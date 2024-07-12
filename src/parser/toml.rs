@@ -4,6 +4,12 @@ use toml::{Table, Value};
 #[derive(Debug, Clone)]
 pub struct TomlParser {}
 
+impl Default for TomlParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TomlParser {
     pub fn new() -> TomlParser {
         TomlParser {}
@@ -17,7 +23,7 @@ impl TomlParser {
             Value::Boolean(b) => NixVariableValue::Boolean(*b),
             Value::Datetime(d) => NixVariableValue::String(d.to_string()),
             Value::Array(a) => {
-                NixVariableValue::List(a.into_iter().map(|f| TomlParser::parse_value(f)).collect())
+                NixVariableValue::List(a.iter().map(TomlParser::parse_value).collect())
             }
             Value::Table(m) => NixVariableValue::AttributeSet(
                 m.into_iter()
@@ -52,7 +58,7 @@ mod test {
     #[test]
     fn test_toml() {
         let parser = TomlParser::new();
-        let parsed = parser.parse(&TOML);
+        let parsed = parser.parse(TOML);
         assert!(parsed.is_some());
         assert_eq!(parsed.unwrap(), *EXPECTED)
     }

@@ -3,6 +3,12 @@ use crate::parser::NixVariable;
 use serde_json::Value;
 
 pub struct JsonParser {}
+impl Default for JsonParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsonParser {
     pub fn new() -> JsonParser {
         JsonParser {}
@@ -24,7 +30,7 @@ impl JsonParser {
                 value
                     .as_array()
                     .unwrap()
-                    .into_iter()
+                    .iter()
                     .map(|value| self.parse_value(value.to_owned()))
                     .collect(),
             )
@@ -70,7 +76,7 @@ mod test {
     fn test_json() {
         let parser = JsonParser::new();
 
-        let parsed = parser.parse(&JSON);
+        let parsed = parser.parse(JSON);
         assert!(parsed.is_some());
         assert_eq!(parsed.unwrap(), *EXPECTED)
     }

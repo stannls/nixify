@@ -3,6 +3,12 @@ use indexmap::IndexMap;
 use yaml_rust2::{Yaml, YamlLoader};
 
 pub struct YamlParser {}
+impl Default for YamlParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl YamlParser {
     pub fn new() -> YamlParser {
         YamlParser {}
@@ -29,8 +35,8 @@ impl YamlParser {
             Yaml::Boolean(b) => NixVariableValue::Boolean(*b),
             Yaml::Null => NixVariableValue::Null,
             Yaml::Array(a) => NixVariableValue::List(
-                a.into_iter()
-                    .map(|f| YamlParser::parse_variable(&f))
+                a.iter()
+                    .map(YamlParser::parse_variable)
                     .collect(),
             ),
             Yaml::Hash(h) => NixVariableValue::AttributeSet(
@@ -65,7 +71,7 @@ mod tests {
     fn test_yaml() {
         let parser = YamlParser::new();
 
-        let parsed = parser.parse(&YAML);
+        let parsed = parser.parse(YAML);
         assert!(parsed.is_some());
         assert_eq!(parsed.unwrap(), *EXPECTED)
     }
